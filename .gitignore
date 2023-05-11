@@ -171,3 +171,9 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# as imagens ignoradas abaixo, podem ser baixadas no kaggle ou no site: https://files.icg.tugraz.at/seafhttp/files/371ff51d-f9c1-4c5a-8cec-542262b3166c/semantic_drone_dataset_semantics_v1.1.zip
+semantic_segmentation_dataset/**/*.jpg
+semantic_segmentation_dataset/**/*.png
+semantic/**/*.jpg
+semantic/**/*.png

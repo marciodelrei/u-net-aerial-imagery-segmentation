@@ -255,7 +255,7 @@ def jaccard_index(y_true, y_pred):
 n_classes = 6
 
 # dataset directory
-data_dir = r"semantic-segmentation-dataset"
+data_dir = "semantic_segmentation_dataset"
 
 # create (X, Y) training data
 X, Y = get_training_data(root_directory=data_dir)
@@ -352,7 +352,8 @@ print("model saved:", model_save_path)
 # =====================================================
 # load pre-trained model
 
-model_dir = '/Users/andrewdavies/Code/tensorflow-projects/u-net-aerial-imagery-segmentation/models/'
+# model_dir = '/Users/andrewdavies/Code/tensorflow-projects/u-net-aerial-imagery-segmentation/models/'
+model_dir = 'models/'
 model_name = 'final_aerial_segmentation_2022-11-09 22_37_27_640199.hdf5'
 
 # model = load_model(
@@ -374,32 +375,78 @@ def rgb_encode_mask(mask):
         rgb_encode_image[(mask == j)] = np.array(cls.value) / 255.
     return rgb_encode_image
 
+def predict_model_just_created(use_model: Model):
+    if use_model is None:
+        model_dir = 'models/'
+        model_name = 'final_aerial_segmentation_2022-11-09 22_37_27_640199.hdf5'
+        use_model = load_model(
+            model_dir + model_name,
+            custom_objects={'iou_coefficient': iou_coefficient, 'jaccard_index': jaccard_index})
 
-for _ in range(20):
-    # choose random number from 0 to test set size
-    test_img_number = np.random.randint(0, len(X_test))
+    for _ in range(20):
+        # choose random number from 0 to test set size
+        test_img_number = np.random.randint(0, len(X_test))
 
-    # extract test input image
-    test_img = X_test[test_img_number]
+        # extract test input image
+        test_img = X_test[test_img_number]
 
-    # ground truth test label converted from one-hot to integer encoding
-    ground_truth = np.argmax(Y_test[test_img_number], axis=-1)
+        # ground truth test label converted from one-hot to integer encoding
+        ground_truth = np.argmax(Y_test[test_img_number], axis=-1)
 
-    # expand first dimension as U-Net requires (m, h, w, nc) input shape
-    test_img_input = np.expand_dims(test_img, 0)
+        # expand first dimension as U-Net requires (m, h, w, nc) input shape
+        test_img_input = np.expand_dims(test_img, 0)
 
-    # make prediction with model and remove extra dimension
-    prediction = np.squeeze(model.predict(test_img_input))
+        # make prediction with model and remove extra dimension
+        # prediction = np.squeeze(model.predict(test_img_input))
+        prediction = np.squeeze(use_model.predict(test_img_input))
 
-    # convert softmax probabilities to integer values
-    predicted_img = np.argmax(prediction, axis=-1)
+        # convert softmax probabilities to integer values
+        predicted_img = np.argmax(prediction, axis=-1)
 
-    # convert integer encoding to rgb values
-    rgb_image = rgb_encode_mask(predicted_img)
-    rgb_ground_truth = rgb_encode_mask(ground_truth)
+        # convert integer encoding to rgb values
+        rgb_image = rgb_encode_mask(predicted_img)
+        rgb_ground_truth = rgb_encode_mask(ground_truth)
 
-    # visualize model predictions
-    display_images(
-        [test_img, rgb_ground_truth, rgb_image],
-        rows=1, titles=['Aerial', 'Ground Truth', 'Prediction']
-    )
+        # visualize model predictions
+        display_images(
+            [test_img, rgb_ground_truth, rgb_image],
+            rows=1, titles=['Aerial', 'Ground Truth', 'Prediction']
+        )
+
+def predict(dir_images, use_model):
+    if use_model is None:
+        model_dir = 'models/'
+        model_name = 'final_aerial_segmentation_2022-11-09 22_37_27_640199.hdf5'
+        use_model = load_model(
+            model_dir + model_name,
+            custom_objects={'iou_coefficient': iou_coefficient, 'jaccard_index': jaccard_index})
+    
+    print(use_model.summary())
+    
+    # predict images
+    predicted_imgs = []
+    for img_path in dir_images:
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (640, 480))
+        img = img / 255
+        img = np.expand_dims(img, axis=0)
+        img = np.expand_dims(img, axis=3)
+        img = img.astype(np.float32)
+        
+        # make prediction with model and remove extra dimension
+        # prediction = np.squeeze(model.predict(test_img_input))
+        prediction = np.squeeze(use_model.predict(img))
+        predicted_imgs.append(prediction)
+
+        # convert softmax probabilities to integer values
+        predicted_img = np.argmax(prediction, axis=-1)
+
+        # convert integer encoding to rgb values
+        rgb_image = rgb_encode_mask(predicted_img)
+
+        # visualize model predictions
+        display_images(
+            [predicted_img, rgb_image],
+            rows=1, titles=['Aerial', 'Prediction']
+        )
