@@ -177,3 +177,5 @@ semantic_segmentation_dataset/**/*.jpg
 semantic_segmentation_dataset/**/*.png
 semantic/**/*.jpg
 semantic/**/*.png
+image_patches/*
+mask_patches
